@@ -2,6 +2,7 @@ import requests
 import xlwt
 from xlwt import Workbook
 import smtplib
+import os
 from os.path import basename
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -37,6 +38,28 @@ def output_xls(data):
     
     wb.save('remote_jobs.xls')
 
+def send_email(send_from,send_to,subject,text,files=None):
+    assert isinstance(send_to,list)
+    msg=MIMEMultipart()
+    msg['From']=send_from
+    msg['To']=COMMASPACE.join(send_to)
+    msg['Date']=formatdate(localtime=True)
+    msg['Subject']=subject
+    msg.attach(MIMEText(text))
+    
+    for f in files or []:
+        with open(f,'rb') as fil:
+            part=MIMEApplication(fil.read(),Name=basename(f))
+        part['Content-Disposition']=f'attachment; filename="{basename(f)}"'
+        msg.attach(part)
+    smtp=smtplib.SMTP('smtp.gmail.com:587')
+    smtp.starttls()
+    smtp.login(send_from,"")
+    smtp.sendmail(send_from,send_to,msg.as_string())
+    smtp.close()
+
+
 if __name__ == "__main__":
-    json = get_job_postings()[1:]
-    output_xls(json)
+    # json = get_job_postings()[1:]
+    # output_xls(json)
+    send_email('saurabhrgccp23@gmail.com',['yores.2002@gmail.com'],'Jobs posting',"Checking mail automation",files=['remote_jobs.xls'])
